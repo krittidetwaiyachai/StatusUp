@@ -1,0 +1,26 @@
+# config สำหรับ /rankup
+# 'default' คือยศเริ่มต้น (ถ้า LuckPerms หายศที่ขึ้นต้นด้วย 'rank-' ไม่เจอ)
+ranks:
+  default:
+    display_name: 'No Rank'
+    next: 'rank-a'
+    cost: 1000
+    requirements:
+      - '%statistic_time_played% >= 600' # 10 นาที
+  rank-a:
+    display_name: 'Rank A'
+    next: 'rank-b'
+    cost: 10000
+    requirements:
+      - '%statistic_player_kills% >= 10'
+  rank-b:
+    display_name: 'Rank B'
+    next: 'rank-c'
+    cost: 50000
+    requirements:
+      - '%statistic_blocks_broken% >= 5000'
+  rank-c:
+    display_name: 'Rank C (MAX)'
+    next: null
+    cost: 0
+    requirements: []

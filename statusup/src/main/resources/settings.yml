@@ -1,0 +1,30 @@
+# Settings for StatusUp Plugin
+
+# Database
+# We use this to log all successful upgrades.
+# Type: "mysql", "sqlite", or "none"
+database:
+  type: "sqlite" # <-- (ใหม่) เปลี่ยนตรงนี้
+
+  # MySQL Settings (ใช้เมื่อ type: "mysql")
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "minecraft_server"
+    username: "root"
+    password: "YourPassword"
+  
+  # SQLite Settings (ใช้เมื่อ type: "sqlite")
+  sqlite:
+    # ปลั๊กอินจะสร้างไฟล์นี้ใน /plugins/StatusUp/logs.db
+    filename: "logs.db"
+
+# Discord Webhook
+# Get this from your Discord Server settings (Integrations -> Webhooks)
+discord:
+  enabled: true
+  webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
+  # (ใหม่) ตั้งชื่อบอทที่จะโชว์ใน Discord
+  username: "StatusUp Notifier"
+  # (ใหม่) ใส่ URL รูป .png หรือ .jpg สำหรับโปรไฟล์บอท (เว้นว่างไว้ถ้าจะใช้รูปดีฟอลต์)
+  avatar_url: ""

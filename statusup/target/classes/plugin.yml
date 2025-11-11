@@ -1,0 +1,16 @@
+name: StatusUp
+version: 1.0.0
+main: xyz.kaijiieow.statusup.StatusUp
+api-version: 1.18
+author: Kaijiieow
+depend: [Vault, LuckPerms, PlaceholderAPI]
+
+commands:
+  rankup:
+    description: Upgrade your rank.
+    usage: /rankup
+    permission: statusup.rankup
+  starup:
+    description: Upgrade your star level.
+    usage: /starup
+    permission: statusup.starup

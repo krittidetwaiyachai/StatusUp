@@ -1,0 +1,21 @@
+# config สำหรับ /starup
+# 'default' คือดาวเริ่มต้น (ถ้า LuckPerms หายศที่ขึ้นต้นด้วย 'star-' ไม่เจอ)
+stars:
+  default:
+    display_name: 'No Star'
+    next: 'star-1'
+    cost: 1000000
+    requirements:
+      - '%statistic_mob_kills% >= 1000'
+      - '%statistic_player_kills% >= 500'
+  star-1:
+    display_name: 'Star 1'
+    next: 'star-2'
+    cost: 5000000
+    requirements:
+      - '%statistic_time_played% >= 86400' # 1 วัน
+  star-2:
+    display_name: 'Star 2 (MAX)'
+    next: null
+    cost: 0
+    requirements: []
