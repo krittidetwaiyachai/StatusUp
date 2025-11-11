@@ -1,4 +1,4 @@
-package com.yourdomain.statusup.core;
+package xyz.kaijiieow.statusup.core;
 
 public enum UpgradeResult {
     SUCCESS,

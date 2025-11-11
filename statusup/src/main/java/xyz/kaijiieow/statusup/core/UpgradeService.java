@@ -8,16 +8,20 @@ import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
 import net.milkbowl.vault.economy.Economy;
+import su.nightexpress.coinsengine.api.CoinsEngineAPI; // Import CoinsEngine API
+
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public class UpgradeService {
 
     private final StatusUp plugin;
-    private final Economy econ;
+    private final Economy econ; // Might be null
+    private final CoinsEngineAPI coinsEngineAPI; // Might be null
     private final LuckPerms lpApi;
     private final RequirementChecker checker;
     
@@ -25,10 +29,11 @@ public class UpgradeService {
     private final FileLogger fileLogger;
     private final DiscordWebhookService discordWebhook;
 
-    public UpgradeService(StatusUp plugin, Economy econ, LuckPerms lpApi, RequirementChecker checker,
+    public UpgradeService(StatusUp plugin, Economy econ, CoinsEngineAPI coinsEngineAPI, LuckPerms lpApi, RequirementChecker checker,
                           DatabaseManager dbManager, FileLogger fileLogger, DiscordWebhookService discordWebhook) {
         this.plugin = plugin;
         this.econ = econ;
+        this.coinsEngineAPI = coinsEngineAPI;
         this.lpApi = lpApi;
         this.checker = checker;
         this.dbManager = dbManager;
@@ -55,7 +60,17 @@ public class UpgradeService {
             double cost = config.getDouble(nextPath + ".cost");
             List<String> requirements = config.getStringList(nextPath + ".requirements");
 
-            boolean canAfford = econ.getBalance(player) >= cost;
+            boolean canAfford;
+            if (this.econ != null) {
+                canAfford = econ.getBalance(player) >= cost;
+            } else if (this.coinsEngineAPI != null) {
+                // CoinsEngine uses long, so we cast the cost
+                canAfford = coinsEngineAPI.getCoins(player.getUniqueId()) >= (long) cost;
+            } else {
+                canAfford = false;
+                plugin.log(Level.WARNING, "No economy provider (Vault or CoinsEngine) is active in UpgradeService!");
+            }
+
             boolean meetsStats = checker.check(player, requirements);
             String nextGroupDisplay = config.getString(nextPath + ".display_name", nextGroup);
 
@@ -88,7 +103,17 @@ public class UpgradeService {
                 return CompletableFuture.completedFuture(UpgradeResult.NO_STATS);
             }
 
-            econ.withdrawPlayer(player, details.cost());
+            // Withdraw money from the correct provider
+            if (this.econ != null) {
+                econ.withdrawPlayer(player, details.cost());
+            } else if (this.coinsEngineAPI != null) {
+                // CoinsEngine uses long
+                coinsEngineAPI.removeCoins(player.getUniqueId(), (long) details.cost());
+            } else {
+                fileLogger.logError("CRITICAL: No economy provider found during upgrade perform!", null);
+                return CompletableFuture.completedFuture(UpgradeResult.ERROR);
+            }
+
 
             return lpApi.getUserManager().loadUser(player.getUniqueId()).thenApplyAsync(user -> {
                 try {

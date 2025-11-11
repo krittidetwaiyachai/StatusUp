@@ -1,5 +1,11 @@
 # Settings for StatusUp Plugin
 
+# Economy provider
+# Which economy plugin to use?
+# Supported: "Vault", "CoinsEngine"
+economy:
+  provider: "Vault"
+
 # Database
 # We use this to log all successful upgrades.
 # Type: "mysql", "sqlite", or "none"

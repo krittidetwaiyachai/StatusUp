@@ -3,7 +3,7 @@ version: 1.0.0
 main: xyz.kaijiieow.statusup.StatusUp
 api-version: 1.18
 author: Kaijiieow
-depend: [Vault, LuckPerms, PlaceholderAPI]
+depend: [Vault, LuckPerms, PlaceholderAPI, CoinsEngine]
 
 commands:
   rankup:
