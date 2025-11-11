@@ -1,0 +1,16 @@
+xyz\kaijiieow\statusup\core\DatabaseManager.class
+xyz\kaijiieow\statusup\core\UpgradeResponse.class
+xyz\kaijiieow\statusup\core\RequirementChecker.class
+xyz\kaijiieow\statusup\notifications\DiscordWebhookService.class
+xyz\kaijiieow\statusup\core\FileLogger.class
+xyz\kaijiieow\statusup\core\UpgradeService.class
+xyz\kaijiieow\statusup\gui\GUIManager.class
+xyz\kaijiieow\statusup\commands\RankupCommand.class
+xyz\kaijiieow\statusup\core\UpgradeDetails.class
+xyz\kaijiieow\statusup\core\UpgradeResult.class
+xyz\kaijiieow\statusup\StatusUp.class
+xyz\kaijiieow\statusup\core\ConfigManager.class
+xyz\kaijiieow\statusup\commands\StatusUpCommand.class
+xyz\kaijiieow\statusup\gui\GUIListener$1.class
+xyz\kaijiieow\statusup\gui\GUIListener.class
+xyz\kaijiieow\statusup\commands\StarupCommand.class
