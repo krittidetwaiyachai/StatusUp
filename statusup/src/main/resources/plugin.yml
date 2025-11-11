@@ -14,3 +14,7 @@ commands:
     description: Upgrade your star level.
     usage: /starup
     permission: statusup.starup
+  statusup:
+    description: Main command for StatusUp plugin.
+    usage: /statusup
+    permission: statusup.admin
