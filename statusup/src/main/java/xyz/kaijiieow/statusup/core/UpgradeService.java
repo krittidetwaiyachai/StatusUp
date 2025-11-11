@@ -8,7 +8,8 @@ import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
 import net.milkbowl.vault.economy.Economy;
-import su.nightexpress.coinsengine.api.CoinsEngineAPI; // Import CoinsEngine API
+import su.nightexpress.coinsengine.api.CoinsEngineAPI;
+import su.nightexpress.coinsengine.api.currency.Currency;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -16,12 +17,13 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class UpgradeService {
 
     private final StatusUp plugin;
-    private final Economy econ; // Might be null
-    private final CoinsEngineAPI coinsEngineAPI; // Might be null
+    private final Economy econ;
+    private final CoinsEngineAPI coinsEngineAPI;
     private final LuckPerms lpApi;
     private final RequirementChecker checker;
     
@@ -53,24 +55,15 @@ public class UpgradeService {
             String currentGroupDisplay = config.getString(path + ".display_name", currentKey);
 
             if (isMaxLevel) {
-                return new UpgradeDetails(currentKey, null, currentGroupDisplay, null, 0, null, false, false, true);
+                return new UpgradeDetails(currentKey, null, currentGroupDisplay, null, List.of(), null, false, false, true);
             }
 
             String nextPath = configSection + "." + nextGroup;
-            double cost = config.getDouble(nextPath + ".cost");
+            
+            List<String> costs = config.getStringList(nextPath + ".costs");
             List<String> requirements = config.getStringList(nextPath + ".requirements");
 
-            boolean canAfford;
-            if (this.econ != null) {
-                canAfford = econ.getBalance(player) >= cost;
-            } else if (this.coinsEngineAPI != null) {
-                // CoinsEngine uses long, so we cast the cost
-                canAfford = coinsEngineAPI.getCoins(player.getUniqueId()) >= (long) cost;
-            } else {
-                canAfford = false;
-                plugin.log(Level.WARNING, "No economy provider (Vault or CoinsEngine) is active in UpgradeService!");
-            }
-
+            boolean canAfford = checkAffordability(player, costs);
             boolean meetsStats = checker.check(player, requirements);
             String nextGroupDisplay = config.getString(nextPath + ".display_name", nextGroup);
 
@@ -79,7 +72,7 @@ public class UpgradeService {
                     nextGroup,
                     currentGroupDisplay,
                     nextGroupDisplay,
-                    cost,
+                    costs,
                     requirements,
                     canAfford,
                     meetsStats,
@@ -103,14 +96,8 @@ public class UpgradeService {
                 return CompletableFuture.completedFuture(UpgradeResult.NO_STATS);
             }
 
-            // Withdraw money from the correct provider
-            if (this.econ != null) {
-                econ.withdrawPlayer(player, details.cost());
-            } else if (this.coinsEngineAPI != null) {
-                // CoinsEngine uses long
-                coinsEngineAPI.removeCoins(player.getUniqueId(), (long) details.cost());
-            } else {
-                fileLogger.logError("CRITICAL: No economy provider found during upgrade perform!", null);
+            if (!withdrawCosts(player, details.costs())) {
+                fileLogger.logError("CRITICAL: Failed to withdraw costs even after 'canAfford' check for " + player.getName(), null);
                 return CompletableFuture.completedFuture(UpgradeResult.ERROR);
             }
 
@@ -153,5 +140,99 @@ public class UpgradeService {
                 .filter(groupName -> groupName.startsWith(groupPrefix))
                 .findFirst()
                 .orElse("");
+    }
+
+
+    private boolean checkAffordability(Player player, List<String> costs) {
+        if (costs == null || costs.isEmpty()) {
+            return true;
+        }
+
+        for (String costStr : costs) {
+            String[] parts = costStr.split(":", 2);
+            if (parts.length != 2) {
+                plugin.log(Level.WARNING, "Invalid cost format in config: " + costStr);
+                continue;
+            }
+
+            try {
+                String currencyId = parts[0].trim();
+                double amount = Double.parseDouble(parts[1].trim());
+
+                if (currencyId.equalsIgnoreCase("vault")) {
+                    if (this.econ == null || !this.econ.has(player, amount)) {
+                        return false;
+                    }
+                } else {
+                    if (this.coinsEngineAPI == null) {
+                        plugin.log(Level.WARNING, "Cost defined for " + currencyId + " but CoinsEngine is not loaded.");
+                        return false;
+                    }
+                    Currency currency = CoinsEngineAPI.getCurrency(currencyId);
+                    if (currency == null) {
+                        plugin.log(Level.WARNING, "CoinsEngine currency '" + currencyId + "' not found!");
+                        return false;
+                    }
+                    if (CoinsEngineAPI.getBalance(player, currency) < amount) {
+                        return false;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                plugin.log(Level.WARNING, "Invalid cost amount in config: " + costStr);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean withdrawCosts(Player player, List<String> costs) {
+        if (costs == null) return true;
+
+        for (String costStr : costs) {
+            String[] parts = costStr.split(":", 2);
+            if (parts.length != 2) continue;
+
+            try {
+                String currencyId = parts[0].trim();
+                double amount = Double.parseDouble(parts[1].trim());
+
+                if (currencyId.equalsIgnoreCase("vault")) {
+                    if (this.econ != null) {
+                        this.econ.withdrawPlayer(player, amount);
+                    }
+                } else {
+                    Currency currency = CoinsEngineAPI.getCurrency(currencyId);
+                    if (this.coinsEngineAPI != null && currency != null) {
+                        CoinsEngineAPI.removeBalance(player, currency, amount);
+                    }
+                }
+            } catch (NumberFormatException e) {
+                plugin.log(Level.WARNING, "Error parsing cost during withdrawal: " + costStr);
+            }
+        }
+        return true;
+    }
+
+    public static List<String> formatCostsForDisplay(List<String> costs) {
+        if (costs == null || costs.isEmpty()) {
+            return List.of("&aFree");
+        }
+        return costs.stream()
+                .map(costStr -> {
+                    String[] parts = costStr.split(":", 2);
+                    if (parts.length != 2) return "&cInvalid Cost";
+                    try {
+                        String currencyId = parts[0].trim();
+                        double amount = Double.parseDouble(parts[1].trim());
+                        
+                        String currencyName = currencyId.substring(0, 1).toUpperCase() + currencyId.substring(1);
+                        if (currencyName.equalsIgnoreCase("vault")) currencyName = "Money";
+                        
+                        return String.format("&e%,.0f &7%s", amount, currencyName);
+                    } catch (Exception e) {
+                        return "&cInvalid Cost Format";
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }

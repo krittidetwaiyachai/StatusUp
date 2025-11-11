@@ -13,7 +13,7 @@ import xyz.kaijiieow.statusup.notifications.DiscordWebhookService;
 
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
-import su.nightexpress.coinsengine.api.CoinsEngineAPI; // Import CoinsEngine API
+import su.nightexpress.coinsengine.api.CoinsEngineAPI;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,9 +25,7 @@ import java.util.logging.Level;
 public class StatusUp extends JavaPlugin {
 
     private Economy econ = null;
-    private CoinsEngineAPI coinsEngineAPI = null; // Add CoinsEngine API field
-    private String economyProvider = "Vault"; // Default provider
-
+    private CoinsEngineAPI coinsEngineAPI = null;
     private LuckPerms luckPermsApi = null;
     private boolean placeholderApiAvailable = false;
 
@@ -44,28 +42,16 @@ public class StatusUp extends JavaPlugin {
         configManager.loadConfigs();
         FileConfiguration settings = configManager.getSettingsConfig();
 
-        // Read economy provider setting
-        this.economyProvider = settings.getString("economy.provider", "Vault").toLowerCase();
-
-        // Setup chosen economy provider
-        if (this.economyProvider.equals("vault")) {
-            if (!setupEconomy()) {
-                log(Level.SEVERE, "Economy provider set to 'Vault', but no Vault dependency found!");
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-            log(Level.INFO, "Using Vault as the economy provider.");
-        } else if (this.economyProvider.equals("coinsengine")) {
-            if (!setupCoinsEngine()) {
-                log(Level.SEVERE, "Economy provider set to 'CoinsEngine', but CoinsEngine plugin not found!");
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-            log(Level.INFO, "Using CoinsEngine as the economy provider.");
+        if (setupEconomy()) {
+            log(Level.INFO, "Successfully hooked into Vault.");
         } else {
-            log(Level.SEVERE, "Invalid economy provider specified in settings.yml: " + this.economyProvider);
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+            log(Level.INFO, "Vault not found, skipping hook.");
+        }
+        
+        if (setupCoinsEngine()) {
+            log(Level.INFO, "Successfully hooked into CoinsEngine.");
+        } else {
+            log(Level.INFO, "CoinsEngine not found, skipping hook.");
         }
 
         if (!setupLuckPerms()) {
@@ -86,8 +72,8 @@ public class StatusUp extends JavaPlugin {
         
         this.upgradeService = new UpgradeService(
                 this, 
-                this.econ, // Pass Vault (might be null)
-                this.coinsEngineAPI, // Pass CoinsEngine (might be null)
+                this.econ, 
+                this.coinsEngineAPI,
                 this.luckPermsApi, 
                 requirementChecker,
                 this.databaseManager,

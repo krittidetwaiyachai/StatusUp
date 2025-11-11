@@ -7,7 +7,7 @@ public record UpgradeDetails(
         String nextGroup,
         String currentGroupDisplay,
         String nextGroupDisplay,
-        double cost,
+        List<String> costs,
         List<String> requirements,
         boolean canAfford,
         boolean meetsStats,

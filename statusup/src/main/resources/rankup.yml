@@ -4,23 +4,29 @@ ranks:
   default:
     display_name: 'No Rank'
     next: 'rank-a'
-    cost: 1000
+    costs: # <-- เพิ่มอันนี้แทน
+      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
+      - 'coins: 50'
     requirements:
       - '%statistic_time_played% >= 600' # 10 นาที
   rank-a:
     display_name: 'Rank A'
     next: 'rank-b'
-    cost: 10000
+    costs: # <-- เพิ่มอันนี้แทน
+      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
+      - 'coins: 50'
     requirements:
       - '%statistic_player_kills% >= 10'
   rank-b:
     display_name: 'Rank B'
     next: 'rank-c'
-    cost: 50000
+    costs: # <-- เพิ่มอันนี้แทน
+      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
+      - 'coins: 50'
     requirements:
       - '%statistic_blocks_broken% >= 5000'
   rank-c:
     display_name: 'Rank C (MAX)'
     next: null
-    cost: 0
+    costs: []
     requirements: []

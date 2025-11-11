@@ -64,12 +64,20 @@ public class GUIManager {
         
         boolean canUpgrade = details.canAfford() && details.meetsStats();
 
+        List<String> bookLore = new ArrayList<>();
+        bookLore.add("&fยศปัจจุบัน: &7" + details.currentGroupDisplay());
+        bookLore.add("&fยศถัดไป: &a" + details.nextGroupDisplay());
+        bookLore.add("&fค่าใช้จ่าย:");
+
+        List<String> formattedCosts = UpgradeService.formatCostsForDisplay(details.costs());
+        for (String costLine : formattedCosts) {
+            bookLore.add("  &7- " + costLine);
+        }
+
         inv.setItem(13, createItem(
                 Material.BOOK,
                 "&bข้อมูลการอัปเกรด",
-                "&fยศปัจจุบัน: &7" + details.currentGroupDisplay(),
-                "&fยศถัดไป: &a" + details.nextGroupDisplay(),
-                "&fค่าใช้จ่าย: &e" + String.format("%,.0f", details.cost())
+                bookLore
         ));
 
         inv.setItem(10, createItem(
