@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
+// import java.util.stream.Collectors; // ไม่ต้องการตัวนี้แล้ว
 
 public class UpgradeService {
 
@@ -81,24 +81,26 @@ public class UpgradeService {
         });
     }
 
-    public CompletableFuture<UpgradeResult> performUpgrade(Player player, FileConfiguration config, String groupPrefix, String configSection) {
+    // เปลี่ยน return type
+    public CompletableFuture<UpgradeResponse> performUpgrade(Player player, FileConfiguration config, String groupPrefix, String configSection) {
         
         return getUpgradeDetails(player, config, groupPrefix, configSection).thenComposeAsync(details -> {
             if (details.isMaxLevel()) {
-                return CompletableFuture.completedFuture(UpgradeResult.MAX_LEVEL);
+                // ส่ง response กลับ
+                return CompletableFuture.completedFuture(new UpgradeResponse(UpgradeResult.MAX_LEVEL, details));
             }
             if (!details.canAfford()) {
                 fileLogger.logInfo(player.getName() + " failed upgrade (NO_MONEY) to " + details.nextGroup());
-                return CompletableFuture.completedFuture(UpgradeResult.NO_MONEY);
+                return CompletableFuture.completedFuture(new UpgradeResponse(UpgradeResult.NO_MONEY, details));
             }
             if (!details.meetsStats()) {
                 fileLogger.logInfo(player.getName() + " failed upgrade (NO_STATS) to " + details.nextGroup());
-                return CompletableFuture.completedFuture(UpgradeResult.NO_STATS);
+                return CompletableFuture.completedFuture(new UpgradeResponse(UpgradeResult.NO_STATS, details));
             }
 
             if (!withdrawCosts(player, details.costs())) {
                 fileLogger.logError("CRITICAL: Failed to withdraw costs even after 'canAfford' check for " + player.getName(), null);
-                return CompletableFuture.completedFuture(UpgradeResult.ERROR);
+                return CompletableFuture.completedFuture(new UpgradeResponse(UpgradeResult.ERROR, details));
             }
 
 
@@ -122,11 +124,11 @@ public class UpgradeService {
                     
                     discordWebhook.sendUpgradeNotification(player, details.currentGroupDisplay(), details.nextGroupDisplay(), upgradeType);
 
-                    return UpgradeResult.SUCCESS;
+                    return new UpgradeResponse(UpgradeResult.SUCCESS, details);
                     
                 } catch (Exception e) {
                     fileLogger.logError("Error during LuckPerms update for " + player.getName(), e);
-                    return UpgradeResult.ERROR;
+                    return new UpgradeResponse(UpgradeResult.ERROR, details);
                 }
             });
         });
@@ -213,26 +215,6 @@ public class UpgradeService {
         return true;
     }
 
-    public static List<String> formatCostsForDisplay(List<String> costs) {
-        if (costs == null || costs.isEmpty()) {
-            return List.of("&aFree");
-        }
-        return costs.stream()
-                .map(costStr -> {
-                    String[] parts = costStr.split(":", 2);
-                    if (parts.length != 2) return "&cInvalid Cost";
-                    try {
-                        String currencyId = parts[0].trim();
-                        double amount = Double.parseDouble(parts[1].trim());
-                        
-                        String currencyName = currencyId.substring(0, 1).toUpperCase() + currencyId.substring(1);
-                        if (currencyName.equalsIgnoreCase("vault")) currencyName = "Money";
-                        
-                        return String.format("&e%,.0f &7%s", amount, currencyName);
-                    } catch (Exception e) {
-                        return "&cInvalid Cost Format";
-                    }
-                })
-                .collect(Collectors.toList());
-    }
+    // ย้ายเมธอดนี้ไป GUIManager.java
+    // public static List<String> formatCostsForDisplay(List<String> costs) { ... }
 }

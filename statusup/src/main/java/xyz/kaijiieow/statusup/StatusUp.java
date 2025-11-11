@@ -2,6 +2,7 @@ package xyz.kaijiieow.statusup;
 
 import xyz.kaijiieow.statusup.commands.RankupCommand;
 import xyz.kaijiieow.statusup.commands.StarupCommand;
+import xyz.kaijiieow.statusup.commands.StatusUpCommand; // เพิ่ม
 import xyz.kaijiieow.statusup.core.ConfigManager;
 import xyz.kaijiieow.statusup.core.DatabaseManager;
 import xyz.kaijiieow.statusup.core.FileLogger;
@@ -87,8 +88,7 @@ public class StatusUp extends JavaPlugin {
 
         getCommand("rankup").setExecutor(new RankupCommand(this.guiManager));
         getCommand("starup").setExecutor(new StarupCommand(this.guiManager));
-
-        log(Level.INFO, "StatusUp plugin (v2.0) has been enabled!");
+        getCommand("statusup").setExecutor(new StatusUpCommand(this)); // เพิ่ม
     }
 
     @Override

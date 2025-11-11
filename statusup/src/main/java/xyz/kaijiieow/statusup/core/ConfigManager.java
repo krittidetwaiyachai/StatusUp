@@ -12,6 +12,7 @@ public class ConfigManager {
     private FileConfiguration rankupConfig;
     private FileConfiguration starupConfig;
     private FileConfiguration settingsConfig;
+    private FileConfiguration messagesConfig; // เพิ่ม
 
     public ConfigManager(StatusUp plugin) {
         this.plugin = plugin;
@@ -21,6 +22,11 @@ public class ConfigManager {
         this.rankupConfig = loadConfig("rankup.yml");
         this.starupConfig = loadConfig("starup.yml");
         this.settingsConfig = loadConfig("settings.yml");
+        this.messagesConfig = loadConfig("messages.yml"); // เพิ่ม
+    }
+
+    public void reloadConfigs() { // เพิ่ม
+        loadConfigs();
     }
 
     private FileConfiguration loadConfig(String fileName) {
@@ -41,5 +47,9 @@ public class ConfigManager {
 
     public FileConfiguration getSettingsConfig() {
         return this.settingsConfig;
+    }
+
+    public FileConfiguration getMessagesConfig() { // เพิ่ม
+        return this.messagesConfig;
     }
 }

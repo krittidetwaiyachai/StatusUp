@@ -1,10 +1,12 @@
 package xyz.kaijiieow.statusup.gui;
 
 import xyz.kaijiieow.statusup.core.ConfigManager;
+import xyz.kaijiieow.statusup.core.UpgradeResponse; // แก้
 import xyz.kaijiieow.statusup.core.UpgradeResult;
 import xyz.kaijiieow.statusup.core.UpgradeService;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration; // เพิ่ม
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,11 +18,13 @@ public class GUIListener implements Listener {
     private final GUIManager guiManager;
     private final UpgradeService upgradeService;
     private final ConfigManager configManager;
+    private final FileConfiguration messagesConfig; // เพิ่ม
 
     public GUIListener(GUIManager guiManager, UpgradeService upgradeService) {
         this.guiManager = guiManager;
         this.upgradeService = upgradeService;
         this.configManager = guiManager.plugin.getConfigManager();
+        this.messagesConfig = configManager.getMessagesConfig(); // เพิ่ม
     }
 
     @EventHandler
@@ -32,45 +36,61 @@ public class GUIListener implements Listener {
         if (clickedItem == null || clickedItem.getType() == Material.AIR) {
             return;
         }
+
+        // อ่าน title จาก config
+        String rankupTitle = format(messagesConfig.getString("gui_titles.rankup"));
+        String starupTitle = format(messagesConfig.getString("gui_titles.starup"));
         
-        if (title.equals(GUIManager.TITLE_RANKUP)) {
+        if (title.equals(rankupTitle)) { // แก้
             event.setCancelled(true);
             if (event.getSlot() == 16 && clickedItem.getType() == Material.EMERALD_BLOCK) {
                 player.closeInventory();
                 upgradeService.performUpgrade(player, configManager.getRankupConfig(), "rank-", "ranks")
-                        .thenAccept(result -> sendResultMessage(player, result, "ยศ"));
+                        .thenAccept(response -> sendResultMessage(player, response, "ยศ", "prefix.rank")); // แก้
             }
         } 
-        else if (title.equals(GUIManager.TITLE_STARUP)) {
+        else if (title.equals(starupTitle)) { // แก้
             event.setCancelled(true);
             if (event.getSlot() == 16 && clickedItem.getType() == Material.EMERALD_BLOCK) {
                 player.closeInventory();
                 upgradeService.performUpgrade(player, configManager.getStarupConfig(), "star-", "stars")
-                        .thenAccept(result -> sendResultMessage(player, result, "ดาว"));
+                        .thenAccept(response -> sendResultMessage(player, response, "ดาว", "prefix.star")); // แก้
             }
         }
     }
 
-    private void sendResultMessage(Player player, UpgradeResult result, String type) {
-        String prefix = (type.equals("ดาว") ? "&6[Star] " : "&a[Rank] ");
-        switch (result) {
+    // รื้อใหม่เกือบหมด
+    private void sendResultMessage(Player player, UpgradeResponse response, String type, String prefixKey) {
+        String prefix = messagesConfig.getString(prefixKey, "");
+        String messagePath;
+
+        switch (response.result()) {
             case SUCCESS:
-                player.sendMessage(format(prefix + "&aอัปเกรด " + type + " สำเร็จ!"));
+                messagePath = "messages.success";
                 break;
             case NO_MONEY:
-                player.sendMessage(format(prefix + "&cเงินไม่พอ!"));
+                messagePath = "messages.no_money";
                 break;
             case NO_STATS:
-                player.sendMessage(format(prefix + "&cStats ไม่ถึง!"));
+                messagePath = "messages.no_stats";
                 break;
             case MAX_LEVEL:
-                player.sendMessage(format(prefix + "&e" + type + " ของคุณสูงสุดแล้ว!"));
+                messagePath = "messages.max_level";
                 break;
             case ERROR:
             default:
-                player.sendMessage(format(prefix + "&cเกิดข้อผิดพลาด โปรดติดต่อแอดมิน"));
+                messagePath = "messages.error";
                 break;
         }
+
+        String message = messagesConfig.getString(messagePath, "&cMessage not found: " + messagePath);
+        
+        message = message.replace("{prefix}", prefix)
+                         .replace("{type}", type)
+                         .replace("{from_display}", response.details().currentGroupDisplay())
+                         .replace("{to_display}", response.details().nextGroupDisplay() != null ? response.details().nextGroupDisplay() : "MAX");
+
+        player.sendMessage(format(message));
     }
 
     private String format(String message) {
