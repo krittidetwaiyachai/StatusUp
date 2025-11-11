@@ -1,20 +1,41 @@
 name: StatusUp
-version: 1.0.0
+version: 2.0.0
 main: xyz.kaijiieow.statusup.StatusUp
-api-version: 1.18
-author: Kaijiieow
-depend: [Vault, LuckPerms, PlaceholderAPI, CoinsEngine]
+api-version: 1.16
+depend: [Vault]
+softdepend: [PlayerPoints, PlaceholderAPI]
+authors: [KaijiIEow]
+description: A simple rankup and starup plugin with GUI and requirements.
 
 commands:
+  statusup:
+    description: Opens the main StatusUp GUI.
+    usage: /statusup
+    permission: statusup.gui
   rankup:
-    description: Upgrade your rank.
+    description: Opens the RankUp GUI.
     usage: /rankup
     permission: statusup.rankup
   starup:
-    description: Upgrade your star level.
+    description: Opens the StarUp GUI.
     usage: /starup
     permission: statusup.starup
-  statusup:
-    description: Main command for StatusUp plugin.
-    usage: /statusup
+  st:
+    description: StatusUp admin commands.
+    usage: /st <reload>
+    aliases: [statusupadmin]
     permission: statusup.admin
+
+permissions:
+  statusup.gui:
+    description: Allows opening the main GUI.
+    default: true
+  statusup.rankup:
+    description: Allows opening the rankup GUI.
+    default: true
+  statusup.starup:
+    description: Allows opening the starup GUI.
+    default: true
+  statusup.admin:
+    description: Allows admin commands like reload.
+    default: op

@@ -1,70 +1,131 @@
 package xyz.kaijiieow.statusup.core;
 
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.milkbowl.vault.economy.Economy;
+import org.black_ixx.playerpoints.PlayerPoints;
+import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.Material;
+import org.bukkit.Statistic;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import xyz.kaijiieow.statusup.StatusUp;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RequirementChecker {
 
-    private final boolean papiEnabled;
-    private final ScriptEngine scriptEngine;
+    private final StatusUp plugin;
+    private final Economy economy;
+    private PlayerPointsAPI playerPointsAPI;
 
-    public RequirementChecker(boolean papiEnabled) {
-        this.papiEnabled = papiEnabled;
-        // JavaScript engine (Nashorn) มีอยู่ใน Java 8-14, GraalJS ใน 15+
-        this.scriptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
-        if (this.scriptEngine == null) {
-            Bukkit.getLogger().severe("[StatusUp] JavaScript ScriptEngine not found! Requirements will fail.");
+    public RequirementChecker(StatusUp plugin) {
+        this.plugin = plugin;
+        this.economy = plugin.getEconomy();
+        if (Bukkit.getPluginManager().getPlugin("PlayerPoints") != null) {
+            this.playerPointsAPI = PlayerPoints.getInstance().getAPI();
         }
     }
 
-    public boolean check(Player player, List<String> requirements) {
-        if (!papiEnabled) {
-            // ถ้า PAPI ไม่มี, ให้ผ่านไปเลย (หรือจะให้ fail ก็ได้ แต่ส่วนใหญ่เลือกผ่าน)
-            return true;
-        }
-        
-        if (requirements == null || requirements.isEmpty()) {
-            return true;
-        }
-        
-        if (this.scriptEngine == null) {
-            return false; // ถ้า Engine พัง, ไม่ให้ผ่าน
-        }
+    public Map<String, Boolean> checkRequirements(Player player, ConfigurationSection requirements) {
+        Map<String, Boolean> results = new HashMap<>();
+        if (requirements == null) return results;
 
-        for (String req : requirements) {
-            if (!evaluate(player, req)) {
-                return false;
+        for (String req : requirements.getKeys(false)) {
+            if (req.equalsIgnoreCase("money")) {
+                double requiredAmount = requirements.getDouble(req);
+                if (economy.getBalance(player) < requiredAmount) {
+                    results.put(req, false);
+                } else {
+                    results.put(req, true);
+                }
+            } else if (req.equalsIgnoreCase("playerpoints") && playerPointsAPI != null) {
+                int requiredAmount = requirements.getInt(req);
+                if (playerPointsAPI.look(player.getUniqueId()) < requiredAmount) {
+                    results.put(req, false);
+                } else {
+                    results.put(req, true);
+                }
+            } else if (req.equalsIgnoreCase("level")) {
+                int requiredAmount = requirements.getInt(req);
+                if (player.getLevel() < requiredAmount) {
+                    results.put(req, false);
+                } else {
+                    results.put(req, true);
+                }
+            } else if (req.equalsIgnoreCase("blocks_broken")) {
+                int requiredAmount = requirements.getInt(req);
+                int playerAmount = player.getStatistic(Statistic.MINE_BLOCK); 
+                if (playerAmount < requiredAmount) {
+                    results.put(req, false);
+                } else {
+                    results.put(req, true;
+                }
+            } else if (req.startsWith("blocks_broken_")) {
+                String materialName = req.substring("blocks_broken_".length()).toUpperCase();
+                Material material = Material.matchMaterial(materialName);
+                if (material != null) {
+                    int requiredAmount = requirements.getInt(req);
+                    try {
+                        int playerAmount = player.getStatistic(Statistic.MINE_BLOCK, material);
+                        if (playerAmount < requiredAmount) {
+                            results.put(req, false);
+                        } else {
+                            results.put(req, true);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().warning("Invalid statistic material: " + materialName);
+                        results.put(req, false);
+                    }
+                }
+            } else if (req.startsWith("placeholder_")) {
+                String placeholder = requirements.getString(req + ".placeholder");
+                String condition = requirements.getString(req + ".condition");
+                String valueStr = requirements.getString(req + ".value");
+
+                String parsedPlaceholder = PlaceholderAPI.setPlaceholders(player, placeholder);
+                
+                try {
+                    double placeholderValue = Double.parseDouble(parsedPlaceholder);
+                    double requiredValue = Double.parseDouble(valueStr);
+
+                    boolean met = false;
+                    switch (condition.toLowerCase()) {
+                        case "==": met = placeholderValue == requiredValue; break;
+                        case ">=": met = placeholderValue >= requiredValue; break;
+                        case "<=": met = placeholderValue <= requiredValue; break;
+                        case ">":  met = placeholderValue > requiredValue;  break;
+                        case "<":  met = placeholderValue < requiredValue;  break;
+                    }
+                    results.put(req, met);
+
+                } catch (NumberFormatException e) {
+                    if (condition.equalsIgnoreCase("==")) {
+                        results.put(req, parsedPlaceholder.equals(valueStr));
+                    } else if (condition.equalsIgnoreCase("!=")) {
+                        results.put(req, !parsedPlaceholder.equals(valueStr));
+                    } else {
+                        plugin.getLogger().warning("Invalid placeholder condition for non-numeric value: " + condition);
+                        results.put(req, false);
+                    }
+                }
             }
         }
-        
-        return true;
+        return results;
     }
 
-    private boolean evaluate(Player player, String expression) {
-        try {
-            String parsed = PlaceholderAPI.setPlaceholders(player, expression);
-            Object result = scriptEngine.eval(parsed);
+    public void takeRequirements(Player player, ConfigurationSection requirements) {
+        if (requirements == null) return;
 
-            if (result instanceof Boolean) {
-                return (Boolean) result;
-            } else {
-                Bukkit.getLogger().warning("[StatusUp] Expression did not return a boolean: " + parsed);
-                return false;
+        for (String req : requirements.getKeys(false)) {
+            if (req.equalsIgnoreCase("money")) {
+                economy.withdrawPlayer(player, requirements.getDouble(req));
+            } else if (req.equalsIgnoreCase("playerpoints") && playerPointsAPI != null) {
+                playerPointsAPI.take(player.getUniqueId(), requirements.getInt(req));
+            } else if (req.equalsIgnoreCase("level")) {
+                player.setLevel(player.getLevel() - requirements.getInt(req));
             }
-        } catch (ScriptException e) {
-            Bukkit.getLogger().warning("[StatusUp] Error evaluating expression: " + expression);
-            e.printStackTrace();
-            return false;
-        } catch (NullPointerException e) {
-            Bukkit.getLogger().warning("[StatusUp] NullPointerException during evaluation. Is PlaceholderAPI hooked?");
-            return false;
         }
     }
 }

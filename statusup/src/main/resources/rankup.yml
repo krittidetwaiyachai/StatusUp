@@ -1,32 +1,124 @@
-# config สำหรับ /rankup
-# 'default' คือยศเริ่มต้น (ถ้า LuckPerms หายศที่ขึ้นต้นด้วย 'rank-' ไม่เจอ)
-ranks:
-  default:
-    display_name: 'No Rank'
-    next: 'rank-a'
-    costs: # <-- เพิ่มอันนี้แทน
-      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
-      - 'coins: 50'
+gui:
+  title: "&8Rank UP"
+  size: 54
+  fill-glass:
+    enabled: true
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-button:
+    enabled: true
+    material: "ARROW"
+    name: "&cBack to Main Menu"
+    lore:
+      - "&7Click to return."
+    slot: 49
+
+upgrades:
+  "1":
+    name: "&7Coal"
+    item:
+      material: "COAL_BLOCK"
+      name: "&7Rank: Coal"
+      lore:
+        - "&8The beginning of your journey."
+        - "&7Unlocks access to /kit coal"
+      slot: 10
+      
+      unlocked-material: "EMERALD_BLOCK"
+      unlocked-name: "&a&lUNLOCKED: &7Coal"
+      unlocked-lore:
+        - "&7You have unlocked this rank."
+      unlocked-glow: true
+      
+      can-upgrade-material: "GOLD_BLOCK"
+      can-upgrade-name: "&e&lUPGRADE: &7Coal"
+      can-upgrade-lore:
+        - "&8The beginning of your journey."
+        - "&7Unlocks access to /kit coal"
+      can-upgrade-glow: true
+
+      locked-material: "BARRIER"
+      locked-name: "&c&lLOCKED: &7Coal"
+      locked-lore:
+        - "&cYou must unlock the previous rank."
+      locked-glow: false
+      
+      status-unlocked: "&a&lUNLOCKED"
+      status-locked: "&c&lLOCKED"
+      status-can-upgrade: "&a&lCLICK TO UPGRADE"
+      status-requirements-not-met: "&c&lREQUIREMENTS NOT MET"
+      
     requirements:
-      - '%statistic_time_played% >= 600' # 10 นาที
-  rank-a:
-    display_name: 'Rank A'
-    next: 'rank-b'
-    costs: # <-- เพิ่มอันนี้แทน
-      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
-      - 'coins: 500'
+      money: 1000
+      blocks_broken: 500
+    commands:
+      - "lp user %player% permission set kit.coal true"
+      - "say %player% is now Coal rank!"
+      
+  "2":
+    name: "&fIron"
+    item:
+      material: "IRON_BLOCK"
+      name: "&fRank: Iron"
+      lore:
+        - "&7Stronger than coal."
+        - "&7Unlocks access to /kit iron"
+      slot: 12
+      
+      unlocked-material: "EMERALD_BLOCK"
+      unlocked-name: "&a&lUNLOCKED: &fIron"
+      unlocked-lore: [ "&7You have unlocked this rank." ]
+      unlocked-glow: true
+      
+      can-upgrade-material: "GOLD_BLOCK"
+      can-upgrade-name: "&e&lUPGRADE: &fIron"
+      can-upgrade-lore:
+        - "&7Stronger than coal."
+        - "&7Unlocks access to /kit iron"
+      can-upgrade-glow: true
+
+      locked-material: "BARRIER"
+      locked-name: "&c&lLOCKED: &fIron"
+      locked-lore: [ "&cYou must unlock the previous rank." ]
+      locked-glow: false
+      
     requirements:
-      - '%statistic_player_kills% >= 10'
-  rank-b:
-    display_name: 'Rank B'
-    next: 'rank-c'
-    costs: # <-- เพิ่มอันนี้แทน
-      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
-      - 'coins: 50'
+      money: 5000
+      level: 10
+      blocks_broken: 2000
+    commands:
+      - "lp user %player% permission set kit.iron true"
+
+  "3":
+    name: "&6Gold"
+    item:
+      material: "GOLD_BLOCK"
+      name: "&6Rank: Gold"
+      lore:
+        - "&eShiny and valuable."
+        - "&7Unlocks access to /kit gold"
+      slot: 14
+      
+      unlocked-material: "EMERALD_BLOCK"
+      unlocked-name: "&a&lUNLOCKED: &6Gold"
+      unlocked-lore: [ "&7You have unlocked this rank." ]
+      unlocked-glow: true
+      
+      can-upgrade-material: "GOLD_BLOCK"
+      can-upgrade-name: "&e&lUPGRADE: &6Gold"
+      can-upgrade-lore:
+        - "&eShiny and valuable."
+        - "&7Unlocks access to /kit gold"
+      can-upgrade-glow: true
+
+      locked-material: "BARRIER"
+      locked-name: "&c&lLOCKED: &6Gold"
+      locked-lore: [ "&cYou must unlock the previous rank." ]
+      locked-glow: false
+      
     requirements:
-      - '%statistic_blocks_broken% >= 5000'
-  rank-c:
-    display_name: 'Rank C (MAX)'
-    next: null
-    costs: []
-    requirements: []
+      money: 20000
+      playerpoints: 100
+      blocks_broken_DIAMOND_ORE: 50
+    commands:
+      - "lp user %player% permission set kit.gold true"

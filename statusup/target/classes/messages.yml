@@ -1,76 +1,32 @@
-# 
-# messages.yml
-#
-# placeholders:
-#   {prefix} - คำนำหน้าของข้อความ (เช่น &a[Rank])
-#   {type} - ประเภทการอัปเกรด (เช่น ยศ, ดาว)
-#   {from_display} - ชื่อที่แสดงของยศ/ดาว ปัจจุบัน
-#   {to_display} - ชื่อที่แสดงของยศ/ดาว ถัดไป
-#   {current_display} - (ใน GUI) ชื่อที่แสดงของยศ/ดาว ปัจจุบัน
-#   {next_display} - (ใน GUI) ชื่อที่แสดงของยศ/ดาว ถัดไป
-#   {costs} - (ใน GUI) รายการค่าใช้จ่าย
-#   {requirements} - (ใน GUI) รายการเงื่อนไข
-#   {player} - (ใน GUI) ชื่อผู้เล่น
-#
-
-# Prefixes
-prefix:
-  rank: "&a[Rank] "
-  star: "&6[Star] "
-
-# GUI Titles
-gui_titles:
-  rankup: "&1&lRank Up"
-  starup: "&6&lStar Up"
-
-# GUI Items
-gui_items:
-  max_level:
-    name: "&cคุณถึงระดับสูงสุดแล้ว"
-    lore:
-      - "&7ยศ/ดาว ของคุณตันแล้ว"
-      - "&7ไม่สามารถอัปเกรดต่อได้"
-  
-  info_book:
-    name: "&bข้อมูลการอัปเกรด"
-    lore:
-      - "&fยศปัจจุบัน: &7{current_display}"
-      - "&fยศถัดไป: &a{next_display}"
-      - "&fค่าใช้จ่าย:"
-      - "{costs}" # อันนี้จะถูกแทนที่ด้วยรายการค่าใช้จ่าย
-
-  requirements_paper:
-    name: "&6เงื่อนไข Stats"
-    lore:
-      - "{requirements}" # อันนี้จะถูกแทนที่ด้วยรายการเงื่อนไข
-
-  confirm_button:
-    name: "&a[!] คลิกเพื่ออัปเกรด"
-    lore:
-      - "&7คุณสมบัติของคุณผ่านทั้งหมด"
-
-  deny_button:
-    name: "&c[!] ยังอัปเกรดไม่ได้"
-    lore:
-      - "{can_afford_msg}"
-      - "{meets_stats_msg}"
-  
-  status_lines:
-    can_afford: "&a✓ &7เงินพอ"
-    cant_afford: "&c✗ &7เงินไม่พอ"
-    meets_stats: "&a✓ &7Stats ถึง"
-    doesnt_meet_stats: "&c✗ &7Stats ไม่ถึง"
-
-# Result Messages (Chat)
 messages:
-  success: "{prefix}&aอัปเกรด {type} สำเร็จ! &7({from_display} -> {to_display})"
-  no_money: "{prefix}&cเงินไม่พอ!"
-  no_stats: "{prefix}&cStats ไม่ถึง!"
-  max_level: "{prefix}&e{type} ของคุณสูงสุดแล้ว!"
-  error: "{prefix}&cเกิดข้อผิดพลาด โปรดติดต่อแอดมิน"
+  player-only: "&cThis command can only be run by a player."
+  no-permission: "&cYou do not have permission to use this command."
+  plugin-reloaded: "&aStatusUp configuration has been reloaded."
+  
+  rankup-success: "&aYou have ranked up to %rankup%!"
+  rankup-broadcast: "&e%player% &ahas ranked up to &e%rankup%&a!"
+  rankup-already-unlocked: "&cYou have already unlocked this rank."
+  rankup-must-unlock-previous: "&cYou must unlock the previous rank first."
+  
+  starup-success: "&bYou have starred up to %starup%!"
+  starup-broadcast: "&e%player% &bhas starred up to &e%starup%&b!"
+  starup-already-unlocked: "&cYou have already unlocked this star."
+  starup-must-unlock-previous: "&cYou must unlock the previous star first."
+  
+  requirements-not-met: "&cYou do not meet all the requirements to upgrade."
 
-# Command Messages
-commands:
-  reload: "&aStatusUp configs reloaded!"
-  no_permission: "&cYou don't have permission."
-  unknown: "&bStatusUp v2.0 - Use /rankup or /starup"
+gui-lore-headers:
+  requirements: "&eRequirements:"
+
+gui-lore-names:
+  money: "Money"
+  level: "XP Level"
+  playerpoints: "Player Points"
+  blocks_broken: "Blocks Broken"
+  blocks_broken_specific: "Break {material}"
+
+gui-lore-formats:
+  requirement-met: "&a✔ &7{name}: &f{current} / {required}"
+  requirement-not-met: "&c✘ &7{name}: &c{current} &7/ {required}"
+  requirement-met-no-progress: "&a✔ &7{name}"
+  requirement-not-met-no-progress: "&c✘ &7{name}"

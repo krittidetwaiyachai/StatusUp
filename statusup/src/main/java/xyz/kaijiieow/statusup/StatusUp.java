@@ -1,149 +1,109 @@
 package xyz.kaijiieow.statusup;
 
-import xyz.kaijiieow.statusup.commands.RankupCommand;
-import xyz.kaijiieow.statusup.commands.StarupCommand;
-import xyz.kaijiieow.statusup.commands.StatusUpCommand; // เพิ่ม
-import xyz.kaijiieow.statusup.core.ConfigManager;
-import xyz.kaijiieow.statusup.core.DatabaseManager;
-import xyz.kaijiieow.statusup.core.FileLogger;
-import xyz.kaijiieow.statusup.core.RequirementChecker;
-import xyz.kaijiieow.statusup.core.UpgradeService;
-import xyz.kaijiieow.statusup.gui.GUIManager;
-import xyz.kaijiieow.statusup.gui.GUIListener;
-import xyz.kaijiieow.statusup.notifications.DiscordWebhookService;
-
-import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
-import su.nightexpress.coinsengine.api.CoinsEngineAPI;
-
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.kaijiieow.statusup.commands.RankupCommand;
+import xyz.kaijiieow.statusup.commands.StarupCommand;
+import xyz.kaijiieow.statusup.commands.StatusUpAdminCommand;
+import xyz.kaijiieow.statusup.commands.StatusUpCommand;
+import xyz.kaijiieow.statusup.core.ConfigManager;
+import xyz.kaijiieow.statusup.core.DatabaseManager;
+import xyz.kaijiieow.statusup.core.RequirementChecker;
+import xyz.kaijiieow.statusup.core.UpgradeService;
+import xyz.kaijiieow.statusup.gui.GUIListener;
+import xyz.kaijiieow.statusup.gui.GUIManager;
+import xyz.kaijiieow.statusup.notifications.DiscordWebhookService;
 
-import java.util.logging.Level;
+public final class StatusUp extends JavaPlugin {
 
-public class StatusUp extends JavaPlugin {
-
-    private Economy econ = null;
-    private CoinsEngineAPI coinsEngineAPI = null;
-    private LuckPerms luckPermsApi = null;
-    private boolean placeholderApiAvailable = false;
-
+    private static StatusUp instance;
+    private Economy economy;
     private ConfigManager configManager;
     private DatabaseManager databaseManager;
-    private FileLogger fileLogger;
-    private DiscordWebhookService discordWebhookService;
+    private RequirementChecker requirementChecker;
     private UpgradeService upgradeService;
+    private DiscordWebhookService discordWebhookService;
     private GUIManager guiManager;
 
     @Override
     public void onEnable() {
-        this.configManager = new ConfigManager(this);
-        configManager.loadConfigs();
-        FileConfiguration settings = configManager.getSettingsConfig();
+        instance = this;
 
-        if (setupEconomy()) {
-            log(Level.INFO, "Successfully hooked into Vault.");
-        } else {
-            log(Level.INFO, "Vault not found, skipping hook.");
-        }
-        
-        if (setupCoinsEngine()) {
-            log(Level.INFO, "Successfully hooked into CoinsEngine.");
-        } else {
-            log(Level.INFO, "CoinsEngine not found, skipping hook.");
-        }
-
-        if (!setupLuckPerms()) {
-            log(Level.SEVERE, "Disabled due to no LuckPerms dependency found!");
+        if (!setupEconomy()) {
+            getLogger().severe("Vault not found! Disabling plugin.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        this.placeholderApiAvailable = setupPlaceholderAPI();
-        if (!this.placeholderApiAvailable) {
-            log(Level.WARNING, "PlaceholderAPI not found. Stat requirements will not work!");
-        }
 
-        this.fileLogger = new FileLogger(this);
-        this.databaseManager = new DatabaseManager(this, fileLogger, settings);
-        this.discordWebhookService = new DiscordWebhookService(this, fileLogger, settings);
-        
-        RequirementChecker requirementChecker = new RequirementChecker(this.placeholderApiAvailable);
-        
-        this.upgradeService = new UpgradeService(
-                this, 
-                this.econ, 
-                this.coinsEngineAPI,
-                this.luckPermsApi, 
-                requirementChecker,
-                this.databaseManager,
-                this.fileLogger,
-                this.discordWebhookService
-        );
-        
-        this.guiManager = new GUIManager(this, this.upgradeService, this.configManager);
+        this.configManager = new ConfigManager(this);
+        this.databaseManager = new DatabaseManager(this);
+        this.requirementChecker = new RequirementChecker(this);
+        this.discordWebhookService = new DiscordWebhookService(this);
+        this.upgradeService = new UpgradeService(this);
+        this.guiManager = new GUIManager(this);
 
-        getServer().getPluginManager().registerEvents(new GUIListener(this.guiManager, this.upgradeService), this);
+        registerCommands();
+        getServer().getPluginManager().registerEvents(new GUIListener(this), this);
 
-        getCommand("rankup").setExecutor(new RankupCommand(this.guiManager));
-        getCommand("starup").setExecutor(new StarupCommand(this.guiManager));
-        getCommand("statusup").setExecutor(new StatusUpCommand(this)); // เพิ่ม
+        databaseManager.connect();
     }
 
     @Override
     public void onDisable() {
-        if (this.databaseManager != null) {
-            this.databaseManager.closeConnection();
+        if (databaseManager != null) {
+            databaseManager.disconnect();
         }
-        if (this.fileLogger != null) {
-            this.fileLogger.close();
-        }
-        log(Level.INFO, "StatusUp plugin has been disabled.");
+    }
+
+    private void registerCommands() {
+        getCommand("statusup").setExecutor(new StatusUpCommand(this));
+        getCommand("rankup").setExecutor(new RankupCommand(this));
+        getCommand("starup").setExecutor(new StarupCommand(this));
+        getCommand("st").setExecutor(new StatusUpAdminCommand(this));
     }
 
     private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) return false;
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) return false;
-        econ = rsp.getProvider();
-        return econ != null;
-    }
-
-    private boolean setupCoinsEngine() {
-        if (getServer().getPluginManager().getPlugin("CoinsEngine") == null) {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return false;
         }
-        RegisteredServiceProvider<CoinsEngineAPI> rsp = getServer().getServicesManager().getRegistration(CoinsEngineAPI.class);
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
             return false;
         }
-        coinsEngineAPI = rsp.getProvider();
-        return coinsEngineAPI != null;
+        economy = rsp.getProvider();
+        return economy != null;
     }
 
-    private boolean setupLuckPerms() {
-        RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
-        if (provider != null) {
-            luckPermsApi = provider.getProvider();
-            return true;
-        }
-        return false;
+    public static StatusUp getInstance() {
+        return instance;
     }
 
-    private boolean setupPlaceholderAPI() {
-        return (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null);
+    public Economy getEconomy() {
+        return economy;
     }
 
-    public Economy getEconomy() { return econ; }
-    public CoinsEngineAPI getCoinsEngineAPI() { return coinsEngineAPI; }
-    public LuckPerms getLuckPermsApi() { return luckPermsApi; }
-    public ConfigManager getConfigManager() { return configManager; }
-    public FileLogger getFileLogger() { return fileLogger; }
-    public UpgradeService getUpgradeService() { return upgradeService; }
-    public GUIManager getGUIManager() { return guiManager; }
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
 
-    public void log(Level level, String message) {
-        getLogger().log(level, message);
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
+    public RequirementChecker getRequirementChecker() {
+        return requirementChecker;
+    }
+
+    public UpgradeService getUpgradeService() {
+        return upgradeService;
+    }
+
+    public DiscordWebhookService getDiscordWebhookService() {
+        return discordWebhookService;
+    }
+
+    public GUIManager getGuiManager() {
+        return guiManager;
     }
 }

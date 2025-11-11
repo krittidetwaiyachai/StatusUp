@@ -1,29 +1,54 @@
-# Settings for StatusUp Plugin
-# Database
-# We use this to log all successful upgrades.
-# Type: "mysql", "sqlite", or "none"
 database:
-  type: "sqlite" # <-- (ใหม่) เปลี่ยนตรงนี้
+  type: "sqlite" # "mysql" or "sqlite"
+  host: "localhost"
+  port: 3306
+  database: "statusup"
+  username: "root"
+  password: "password"
 
-  # MySQL Settings (ใช้เมื่อ type: "mysql")
-  mysql:
-    host: "localhost"
-    port: 3306
-    database: "minecraft_server"
-    username: "root"
-    password: "YourPassword"
-  
-  # SQLite Settings (ใช้เมื่อ type: "sqlite")
-  sqlite:
-    # ปลั๊กอินจะสร้างไฟล์นี้ใน /plugins/StatusUp/logs.db
-    filename: "logs.db"
-
-# Discord Webhook
-# Get this from your Discord Server settings (Integrations -> Webhooks)
-discord:
+sounds:
   enabled: true
-  webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
-  # (ใหม่) ตั้งชื่อบอทที่จะโชว์ใน Discord
-  username: "StatusUp Notifier"
-  # (ใหม่) ใส่ URL รูป .png หรือ .jpg สำหรับโปรไฟล์บอท (เว้นว่างไว้ถ้าจะใช้รูปดีฟอลต์)
-  avatar_url: ""
+  upgrade-success-sound:
+    name: "ENTITY_PLAYER_LEVELUP"
+    volume: 1.0
+    pitch: 1.0
+  upgrade-fail-sound:
+    name: "ENTITY_VILLAGER_NO"
+    volume: 1.0
+    pitch: 1.0
+
+broadcast:
+  rankup: true
+  starup: true
+
+discord-webhook:
+  enabled: false
+  webhook-url: "YOUR_WEBHOOK_URL_HERE"
+  embed:
+    color: 3447003 # Decimal color code
+    author-name: "StatusUp Notifications"
+    author-icon-url: ""
+
+main-gui:
+  title: "&1&lStatusUP"
+  size: 27
+  fill-glass:
+    enabled: true
+    material: "BLACK_STAINED_GLASS_PANE"
+    name: " "
+  rankup-item:
+    material: "NETHER_STAR"
+    name: "&a&lRankUP"
+    lore:
+      - "&7Click to view ranks!"
+      - ""
+      - "&eYour Rank: &f%statusup_rank_name%"
+    slot: 12
+  starup-item:
+    material: "BEACON"
+    name: "&b&lStarUP"
+    lore:
+      - "&7Click to view stars!"
+      - ""
+      - "&eYour Stars: &f%statusup_star_name%"
+    slot: 14

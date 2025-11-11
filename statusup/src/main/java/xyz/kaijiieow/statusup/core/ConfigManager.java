@@ -1,31 +1,44 @@
 package xyz.kaijiieow.statusup.core;
 
-import xyz.kaijiieow.statusup.StatusUp;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import xyz.kaijiieow.statusup.StatusUp;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ConfigManager {
 
     private final StatusUp plugin;
-    private FileConfiguration rankupConfig;
-    private FileConfiguration starupConfig;
-    private FileConfiguration settingsConfig;
-    private FileConfiguration messagesConfig; // เพิ่ม
+    private FileConfiguration settings;
+    private FileConfiguration messages;
+    private FileConfiguration rankup;
+    private FileConfiguration starup;
+
+    private final Map<String, String> messageCache = new HashMap<>();
 
     public ConfigManager(StatusUp plugin) {
         this.plugin = plugin;
+        loadConfigs();
     }
 
     public void loadConfigs() {
-        this.rankupConfig = loadConfig("rankup.yml");
-        this.starupConfig = loadConfig("starup.yml");
-        this.settingsConfig = loadConfig("settings.yml");
-        this.messagesConfig = loadConfig("messages.yml"); // เพิ่ม
-    }
+        settings = loadConfig("settings.yml");
+        messages = loadConfig("messages.yml");
+        rankup = loadConfig("rankup.yml");
+        starup = loadConfig("starup.yml");
 
-    public void reloadConfigs() { // เพิ่ม
+        loadMessages();
+    }
+    
+    public void reloadConfigs() {
         loadConfigs();
     }
 
@@ -37,19 +50,40 @@ public class ConfigManager {
         return YamlConfiguration.loadConfiguration(file);
     }
 
+    private void loadMessages() {
+        messageCache.clear();
+        if (messages.isConfigurationSection("messages")) {
+            for (String key : messages.getConfigurationSection("messages").getKeys(false)) {
+                messageCache.put(key, format(messages.getString("messages." + key)));
+            }
+        }
+    }
+
+    public FileConfiguration getSettings() {
+        return settings;
+    }
+
+    public FileConfiguration getMessages() {
+        return messages;
+    }
+
     public FileConfiguration getRankupConfig() {
-        return this.rankupConfig;
+        return rankup;
     }
 
     public FileConfiguration getStarupConfig() {
-        return this.starupConfig;
+        return starup;
     }
 
-    public FileConfiguration getSettingsConfig() {
-        return this.settingsConfig;
+    public String getMessage(String key) {
+        return messageCache.getOrDefault(key, format("&cMissing message: " + key));
     }
 
-    public FileConfiguration getMessagesConfig() { // เพิ่ม
-        return this.messagesConfig;
+    public static String format(String text) {
+        return ChatColor.translateAlternateColorCodes('&', text);
+    }
+
+    public static List<String> formatList(List<String> list) {
+        return list.stream().map(ConfigManager::format).collect(Collectors.toList());
     }
 }

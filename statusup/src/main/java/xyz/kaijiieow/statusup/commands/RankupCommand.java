@@ -1,27 +1,33 @@
 package xyz.kaijiieow.statusup.commands;
 
-import xyz.kaijiieow.statusup.gui.GUIManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import xyz.kaijiieow.statusup.StatusUp;
 
 public class RankupCommand implements CommandExecutor {
 
-    private final GUIManager guiManager;
+    private final StatusUp plugin;
 
-    public RankupCommand(GUIManager guiManager) {
-        this.guiManager = guiManager;
+    public RankupCommand(StatusUp plugin) {
+        this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage(plugin.getConfigManager().getMessage("player-only"));
             return true;
         }
-        
-        guiManager.openRankupGUI((Player) sender);
+
+        Player player = (Player) sender;
+        if (!player.hasPermission("statusup.rankup")) {
+            player.sendMessage(plugin.getConfigManager().getMessage("no-permission"));
+            return true;
+        }
+
+        plugin.getGuiManager().openRankupGUI(player);
         return true;
     }
 }
