@@ -14,7 +14,7 @@ ranks:
     next: 'rank-b'
     costs: # <-- เพิ่มอันนี้แทน
       - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
-      - 'coins: 50'
+      - 'coins: 500'
     requirements:
       - '%statistic_player_kills% >= 10'
   rank-b:

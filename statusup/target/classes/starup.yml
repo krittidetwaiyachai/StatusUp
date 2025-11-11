@@ -4,18 +4,22 @@ stars:
   default:
     display_name: 'No Star'
     next: 'star-1'
-    cost: 1000000
+    costs: # <-- เพิ่มอันนี้แทน
+      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
+      - 'coins: 50'
     requirements:
       - '%statistic_mob_kills% >= 1000'
       - '%statistic_player_kills% >= 500'
   star-1:
     display_name: 'Star 1'
     next: 'star-2'
-    cost: 5000000
+    costs: # <-- เพิ่มอันนี้แทน
+      - 'vault: 10000'    # นี่คือใช้เงินจาก Vault
+      - 'coins: 500'
     requirements:
       - '%statistic_time_played% >= 86400' # 1 วัน
   star-2:
     display_name: 'Star 2 (MAX)'
     next: null
-    cost: 0
+    costs: []
     requirements: []
